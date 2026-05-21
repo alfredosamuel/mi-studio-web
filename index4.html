@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mis Planes</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --accent: #2563eb;
+      --accent-soft: #dbeafe;
+      --ok: #16a34a;
+      --border: #e5e7eb;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Inter, system-ui, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .layout { display: flex; height: 100vh; }
+
+    /* ── CALENDAR PANEL ── */
+    .cal-panel {
+      width: 33.333%;
+      background: var(--card);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 20px;
+      overflow-y: auto;
+    }
+
+    .cal-panel h2 { font-size: 1.1rem; margin-bottom: 16px; }
+
+    .cal-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .cal-nav button {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      width: 30px; height: 30px;
+      cursor: pointer;
+      font-size: 1rem;
+      color: var(--text);
+    }
+
+    .cal-nav button:hover { background: var(--bg); }
+    .cal-month { font-weight: 700; font-size: .95rem; }
+
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+    }
+
+    .cal-day-name {
+      text-align: center;
+      font-size: .68rem;
+      font-weight: 600;
+      color: var(--muted);
+      padding: 3px 0;
+    }
+
+    .cal-day {
+      aspect-ratio: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 7px;
+      font-size: .78rem;
+      cursor: default;
+      position: relative;
+    }
+
+    .cal-day.today { background: var(--accent-soft); font-weight: 700; color: var(--accent); }
+    .cal-day.has-marks { background: #f0fdf4; }
+
+    .cal-dot-row {
+      display: flex;
+      gap: 2px;
+      position: absolute;
+      bottom: 3px;
+    }
+
+    .cal-dot { width: 5px; height: 5px; border-radius: 50%; }
+    .dot-aseo   { background: #16a34a; }
+    .dot-ocio   { background: #7c3aed; }
+    .dot-musica { background: #ea580c; }
+    .dot-notas  { background: #eab308; }
+
+    .legend-section {
+      margin-top: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .legend-section h3 { font-size: .8rem; color: var(--muted); margin-bottom: 4px; }
+
+    .cal-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: .78rem;
+      color: var(--muted);
+    }
+
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .legend-dot.dot-aseo   { background: #16a34a; }
+    .legend-dot.dot-ocio   { background: #7c3aed; }
+    .legend-dot.dot-musica { background: #ea580c; }
+    .legend-dot.dot-notas  { background: #eab308; }
+
+    .log-section {
+      margin-top: 18px;
+      border-top: 1px solid var(--border);
+      padding-top: 14px;
+    }
+
+    .log-section h3 { font-size: .82rem; color: var(--muted); margin-bottom: 8px; }
+    .log-list { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+
+    .log-list li { font-size: .78rem; border-radius: 7px; padding: 5px 8px; }
+    .log-aseo   { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; }
+    .log-ocio   { background: #f5f3ff; border: 1px solid #ddd6fe; color: #6d28d9; }
+    .log-musica { background: #fff7ed; border: 1px solid #fed7aa; color: #c2410c; }
+    .log-notas  { background: #fefce8; border: 1px solid #fde68a; color: #854d0e; }
+
+    /* ── RIGHT PANEL ── */
+    .list-panel {
+      width: 66.666%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .list-header {
+      padding: 18px 24px 0;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-end;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .list-header h1 { font-size: 1.4rem; padding-bottom: 14px; }
+
+    .tab-bar {
+      display: flex;
+      gap: 4px;
+      margin-left: auto;
+      padding-bottom: 0;
+    }
+
+    .tab-btn {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 10px 10px 0 0;
+      font-size: .85rem;
+      font-family: inherit;
+      cursor: pointer;
+      background: #e5e7eb;
+      color: var(--muted);
+      font-weight: 500;
+      transition: .15s;
+      border-bottom: 3px solid transparent;
+    }
+
+    .tab-btn.active {
+      background: var(--card);
+      color: var(--text);
+      font-weight: 700;
+      border-bottom: 3px solid var(--accent);
+    }
+
+    .tab-btn:hover:not(.active) { background: #d1d5db; }
+
+    .list-body { flex: 1; overflow-y: auto; padding: 20px 24px 40px; }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ── CARDS & CHECKLIST ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 3px 10px rgba(0,0,0,.04);
+    }
+
+    .card h2 {
+      font-size: .95rem;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 10px;
+    }
+
+    .master {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: .9rem;
+      padding: 9px 12px;
+      background: var(--accent-soft);
+      border-radius: 10px;
+      margin-bottom: 12px;
+    }
+
+    .status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .progress-text { font-size: .85rem; color: var(--muted); }
+
+    .progress-bar-wrap {
+      flex: 1;
+      background: #e5e7eb;
+      border-radius: 99px;
+      height: 7px;
+      min-width: 60px;
+    }
+
+    .progress-bar-fill {
+      height: 7px;
+      border-radius: 99px;
+      transition: width .3s ease;
+    }
+
+    .fill-aseo   { background: #16a34a; }
+    .fill-ocio   { background: #7c3aed; }
+    .fill-musica { background: #ea580c; }
+
+    .checklist { list-style: none; padding: 0; }
+
+    .item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 7px 0;
+      border-bottom: 1px solid #f0f2f5;
+    }
+
+    .item:last-child { border-bottom: none; }
+
+    input[type="checkbox"] {
+      width: 17px; height: 17px;
+      margin-top: 2px;
+      accent-color: var(--accent);
+      cursor: pointer;
+      flex: 0 0 auto;
+    }
+
+    label { cursor: pointer; font-size: .875rem; }
+    .done label { text-decoration: line-through; color: var(--muted); }
+
+    .gold {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      padding: 9px 12px;
+      border-radius: 10px;
+      font-size: .85rem;
+      margin-bottom: 12px;
+    }
+
+    .purple-note {
+      background: #f5f3ff;
+      border: 1px solid #ddd6fe;
+      padding: 9px 12px;
+      border-radius: 10px;
+      font-size: .85rem;
+      margin-bottom: 12px;
+      color: #4c1d95;
+    }
+
+    .orange-note {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      padding: 9px 12px;
+      border-radius: 10px;
+      font-size: .85rem;
+      margin-bottom: 12px;
+      color: #7c2d12;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      border-radius: 9px;
+      padding: 9px 14px;
+      font-size: .875rem;
+      cursor: pointer;
+      transition: .15s ease;
+      font-family: inherit;
+    }
+
+    .btn-green  { background: #16a34a; color: white; }
+    .btn-green:hover  { filter: brightness(.93); }
+    .btn-purple { background: #7c3aed; color: white; }
+    .btn-purple:hover { filter: brightness(.93); }
+    .btn-orange { background: #ea580c; color: white; }
+    .btn-orange:hover { filter: brightness(.93); }
+    .btn-yellow { background: #eab308; color: white; }
+    .btn-yellow:hover { filter: brightness(.93); }
+    .btn-clear  { background: #e5e7eb; color: #111827; }
+    .btn-clear:hover  { background: #d1d5db; }
+
+    .toast {
+      display: none;
+      margin-top: 10px;
+      padding: 9px 12px;
+      border-radius: 9px;
+      font-size: .84rem;
+    }
+
+    .toast.success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; display: block; }
+    .toast.info    { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; display: block; }
+    .toast.purple  { background: #f5f3ff; border: 1px solid #ddd6fe; color: #6d28d9; display: block; }
+    .toast.orange  { background: #fff7ed; border: 1px solid #fed7aa; color: #c2410c; display: block; }
+    .toast.yellow  { background: #fefce8; border: 1px solid #fde68a; color: #854d0e; display: block; }
+
+    .summary-box {
+      background: #f9fafb;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: .82rem;
+      font-family: monospace;
+      line-height: 1.7;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .82rem;
+      margin-top: 6px;
+    }
+
+    th, td { border: 1px solid var(--border); padding: 7px 9px; text-align: left; vertical-align: top; }
+    th { background: #f9fafb; }
+
+    /* ── NOTAS TAB ── */
+    .notas-hint {
+      background: #fefce8;
+      border: 1px solid #fde68a;
+      padding: 9px 14px;
+      border-radius: 10px;
+      font-size: .82rem;
+      color: #713f12;
+      margin-bottom: 14px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .notas-hint kbd {
+      background: #fff;
+      border: 1px solid #d1d5db;
+      border-radius: 5px;
+      padding: 1px 6px;
+      font-size: .78rem;
+      font-family: monospace;
+      white-space: nowrap;
+    }
+
+    .notas-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 3px 10px rgba(0,0,0,.04);
+    }
+
+    .notas-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .notas-header span { font-size: .85rem; color: var(--muted); }
+
+    .notas-counter {
+      font-size: .8rem;
+      color: var(--muted);
+      background: #f9fafb;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2px 10px;
+    }
+
+    .notas-lines { padding: 6px 0; }
+
+    .nota-row {
+      display: flex;
+      align-items: flex-start;
+      border-bottom: 1px solid #f3f4f6;
+      min-height: 40px;
+      position: relative;
+    }
+
+    .nota-row:last-child { border-bottom: none; }
+
+    .nota-row.done-row .nota-text { text-decoration: line-through; color: #9ca3af; }
+
+    .nota-num {
+      width: 36px;
+      flex: 0 0 36px;
+      text-align: right;
+      padding: 10px 8px 10px 0;
+      font-size: .72rem;
+      color: #d1d5db;
+      user-select: none;
+      line-height: 1.4;
+      padding-top: 11px;
+    }
+
+    .nota-text {
+      flex: 1;
+      padding: 9px 8px 9px 2px;
+      font-size: .875rem;
+      color: var(--text);
+      background: transparent;
+      border: none;
+      outline: none;
+      resize: none;
+      font-family: inherit;
+      line-height: 1.5;
+      min-height: 40px;
+      overflow: hidden;
+    }
+
+    .nota-text::placeholder { color: #d1d5db; }
+
+    .nota-check-wrap {
+      width: 40px;
+      flex: 0 0 40px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 11px;
+    }
+
+    .nota-check {
+      width: 16px; height: 16px;
+      accent-color: #eab308;
+      cursor: pointer;
+    }
+
+    .notas-actions {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .notas-done-count {
+      margin-left: auto;
+      font-size: .8rem;
+      color: var(--muted);
+    }
+
+    @media (max-width: 720px) {
+      .layout { flex-direction: column; }
+      .cal-panel, .list-panel { width: 100%; height: auto; }
+      body { overflow: auto; }
+      .list-header { flex-direction: column; align-items: flex-start; }
+      .tab-bar { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ══════════════ CALENDAR ══════════════ -->
+  <aside class="cal-panel">
+    <h2>📅 Registro de días</h2>
+    <div class="cal-nav">
+      <button id="prevMonth">&#8249;</button>
+      <span class="cal-month" id="calTitle"></span>
+      <button id="nextMonth">&#8250;</button>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+
+    <div class="legend-section">
+      <h3>Referencias</h3>
+      <div class="cal-legend-item"><div class="legend-dot dot-aseo"></div> Aseo profundo</div>
+      <div class="cal-legend-item"><div class="legend-dot dot-ocio"></div> Protocolo de ocio</div>
+      <div class="cal-legend-item"><div class="legend-dot dot-musica"></div> Producción musical</div>
+      <div class="cal-legend-item"><div class="legend-dot dot-notas"></div> Tarea adicional completada</div>
+    </div>
+
+    <div class="log-section">
+      <h3>Últimos registros</h3>
+      <ul class="log-list" id="logList">
+        <li style="color:#9ca3af;font-size:.78rem">Sin registros aún.</li>
+      </ul>
+    </div>
+  </aside>
+
+  <!-- ══════════════ RIGHT PANEL ══════════════ -->
+  <div class="list-panel">
+    <div class="list-header">
+      <h1 id="panelTitle">🧹 Aseo Profundo</h1>
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="aseo">🧹 Aseo</button>
+        <button class="tab-btn" data-tab="ocio">🎮 Ocio</button>
+        <button class="tab-btn" data-tab="musica">🎵 Música</button>
+        <button class="tab-btn" data-tab="notas">📝 Notas</button>
+      </div>
+    </div>
+
+    <div class="list-body">
+
+      <!-- ─────────── TAB: ASEO ─────────── -->
+      <div class="tab-content active" id="tab-aseo">
+        <div class="gold"><strong>Regla de oro:</strong> ordena primero, limpia después. Si limpias en el caos, pierdes el doble de tiempo.</div>
+        <div class="card">
+          <div class="master"><input type="checkbox" id="aseo-all"><label for="aseo-all">Marcar / desmarcar todo</label></div>
+          <div class="status-bar">
+            <span class="progress-text" id="aseo-prog-text">0 / 39</span>
+            <div class="progress-bar-wrap"><div class="progress-bar-fill fill-aseo" id="aseo-prog-fill" style="width:0%"></div></div>
+          </div>
+        </div>
+        <div class="card"><h2>⚡ Preparación (10 min)</h2><ul class="checklist">
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a1"><label for="a1">Abrir ventanas para ventilar.</label></li>
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a2"><label for="a2">Preparar productos: desengrasante, desinfectante, esponja, paños de microfibra, guantes y bolsas de basura.</label></li>
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a3"><label for="a3">Dejar el desengrasante aplicado en la cocina/estufa para que actúe.</label></li>
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a4"><label for="a4">Poner música o un podcast.</label></li>
+        </ul></div>
+        <div class="card"><h2>Bloque 1 — Recoge y clasifica (20–30 min)</h2><ul class="checklist">
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a5"><label for="a5">Recorrer todo el departamento con bolsa de basura y caja de tránsito.</label></li>
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a6"><label for="a6">Recoger ropa del suelo/muebles → clóset o silla designada.</label></li>
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a7"><label for="a7">Loza sucia → lavaplatos o a remojar.</label></li>
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a8"><label for="a8">Separar en la entrada: llaves y monedas, papeles a reciclar y basura.</label></li>
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a9"><label for="a9">Todas las superficies horizontales sin objetos flotando.</label></li>
+        </ul></div>
+        <div class="card"><h2>Bloque 2 — Cocina (45–60 min)</h2><ul class="checklist">
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a10"><label for="a10">Lavar la loza para liberar el mesón.</label></li>
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a11"><label for="a11">Frotar la estufa con el desengrasante ya actuado.</label></li>
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a12"><label for="a12">Sacar y lavar perillas por separado.</label></li>
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a13"><label for="a13">Limpiar paredes y salpicadero alrededor de la estufa.</label></li>
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a14"><label for="a14">Levantar cada objeto del mesón, limpiar debajo y devolver solo lo que corresponde.</label></li>
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a15"><label for="a15">Paño húmedo por fuera al microondas y electrodomésticos.</label></li>
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a16"><label for="a16">Limpiar el exterior del refrigerador, especialmente la puerta.</label></li>
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a17"><label for="a17">Barrer el piso de la cocina.</label></li>
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a18"><label for="a18">Trapear el piso de la cocina.</label></li>
+        </ul></div>
+        <div class="card"><h2>Bloque 3 — Living y guardado (30–40 min)</h2><ul class="checklist">
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a19"><label for="a19">Espacio 1: tecnología, cables y accesorios de trabajo (Ableton, teclado MIDI, DDJ-SB3).</label></li>
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a20"><label for="a20">Espacio 2: libros, cuadernos y proyectos.</label></li>
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a21"><label for="a21">Espacio 3: objetos de uso personal frecuente (audífonos, cargadores, control).</label></li>
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a22"><label for="a22">Distribuir lo de la caja de tránsito según esos roles.</label></li>
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a23"><label for="a23">Aspirar el living completo incluyendo bajo muebles y esquinas.</label></li>
+        </ul></div>
+        <div class="card"><h2>Bloque 4 — Ropa (20–30 min)</h2><ul class="checklist">
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a24"><label for="a24">Categorizar: limpia, usada pero no sucia, y para lavar.</label></li>
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a25"><label for="a25">Doblar o colgar la ropa limpia.</label></li>
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a26"><label for="a26">Ropa usada pero no sucia → gancho detrás de la puerta o silla designada.</label></li>
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a27"><label for="a27">Ropa sucia → bolsa o ponerla a lavar ahora mismo.</label></li>
+        </ul></div>
+        <div class="card"><h2>Bloque 5 — Baño y piso final (20–30 min)</h2><ul class="checklist">
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a28"><label for="a28">Aplicar desinfectante en el WC.</label></li>
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a29"><label for="a29">Limpiar el espejo.</label></li>
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a30"><label for="a30">Limpiar el lavamanos.</label></li>
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a31"><label for="a31">Limpiar la ducha.</label></li>
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a32"><label for="a32">Limpiar el piso del baño.</label></li>
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a33"><label for="a33">Aspirar el piso general del departamento.</label></li>
+          <li class="item"><input type="checkbox" class="task aseo-task" id="a34"><label for="a34">Trapear de adentro hacia afuera, terminando en la puerta.</label></li>
+        </ul></div>
+        <div class="card"><h2>🪵 Tablón de la entrada</h2>
+          <table><thead><tr><th>Elemento</th><th>Función</th></tr></thead><tbody>
+            <tr><td>Bowl o bandeja pequeña</td><td>Llaves, monedas, AirPods.</td></tr>
+            <tr><td>Bandeja o carpeta vertical</td><td>Papeles pendientes, máximo 5.</td></tr>
+            <tr><td>Gancho en la pared</td><td>Mochila y chaqueta de diario.</td></tr>
+            <tr><td>1–2 objetos decorativos fijos</td><td>Solo decoración estable.</td></tr>
+          </tbody></table>
+          <ul class="checklist" style="margin-top:10px">
+            <li class="item"><input type="checkbox" class="task aseo-task" id="a35"><label for="a35">Bowl o bandeja para llaves, monedas y AirPods en su lugar.</label></li>
+            <li class="item"><input type="checkbox" class="task aseo-task" id="a36"><label for="a36">Bandeja vertical para papeles pendientes.</label></li>
+            <li class="item"><input type="checkbox" class="task aseo-task" id="a37"><label for="a37">Gancho para mochila y chaqueta instalado o definido.</label></li>
+            <li class="item"><input type="checkbox" class="task aseo-task" id="a38"><label for="a38">Máximo 1–2 objetos decorativos fijos en el tablón.</label></li>
+            <li class="item"><input type="checkbox" class="task aseo-task" id="a39"><label for="a39">Aplicar la regla: si no tiene lugar en bandeja/bowl, no va en el tablón.</label></li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="actions">
+            <button class="btn-green" onclick="registrarDia('aseo')">✅ Hecho</button>
+            <button class="btn-clear" onclick="limpiarChecklist('aseo')">🗑️ Limpiar</button>
+          </div>
+          <div class="toast" id="aseo-toast"></div>
+        </div>
+      </div>
+
+      <!-- ─────────── TAB: OCIO ─────────── -->
+      <div class="tab-content" id="tab-ocio">
+        <div class="purple-note"><strong>Regla de oro:</strong> elige antes de entrar, decláralo, pon la alarma. El ocio con intención recupera; el ocio en piloto automático solo anestesia.</div>
+        <div class="card">
+          <div class="master" style="background:#f5f3ff"><input type="checkbox" id="ocio-all"><label for="ocio-all">Marcar / desmarcar todo</label></div>
+          <div class="status-bar">
+            <span class="progress-text" id="ocio-prog-text">0 / 16</span>
+            <div class="progress-bar-wrap"><div class="progress-bar-fill fill-ocio" id="ocio-prog-fill" style="width:0%"></div></div>
+          </div>
+        </div>
+        <div class="card"><h2>Fase 1 — Antes de entrar (2 min)</h2><ul class="checklist">
+          <li class="item"><input type="checkbox" class="task ocio-task" id="o1"><label for="o1">Bloque 1: Elige qué vas a hacer — un episodio, 45 min de YouTube, una partida, TikTok. Nada de "veo qué hay".</label></li>
+          <li class="item"><input type="checkbox" class="task ocio-task" id="o2"><label for="o2">Bloque 1: Decide cuánto tiempo exacto — no "un rato": 30, 45 o 60 minutos.</label></li>
+          <li class="item"><input type="checkbox" class="task ocio-task" id="o3"><label for="o3">Bloque 1: Si puedes, elige el contenido antes de abrir la app — el algoritmo no tiene final natural.</label></li>
+          <li class="item"><input type="checkbox" class="task ocio-task" id="o4"><label for="o4">Bloque 2: Declara en voz baja: "Voy a ver [X] por [Y] minutos. Esto es ocio elegido, no escape."</label></li>
+          <li class="item"><input type="checkbox" class="task ocio-task" id="o5"><label for="o5">Bloque 3: Crear la alarma con el texto exacto: "¿Esto es lo que quiero hacer ahora?"</label></li>
+        </ul></div>
+        <div class="card"><h2>Fase 2 — Durante el ocio</h2><ul class="checklist">
+          <li class="item"><input type="checkbox" class="task ocio-task" id="o6"><label for="o6">Bloque 4: Disfruta sin culpa. Si aparece, di: "Yo elijo, nadie castiga." La culpa no es señal de que debes trabajar.</label></li>
+        </ul></div>
+        <div class="card"><h2>Fase 3 — Para Terminar y Salir</h2><ul class="checklist">
+          <li class="item"><input type="checkbox" class="task ocio-task" id="o7"><label for="o7">Bloque 5: Respira antes de tocar nada, <b>"Vuelvo cuando quiero" / "Si paro, está todo bien".</b> Repite 2 veces.</label></li>
+          <li class="item"><input type="checkbox" class="task ocio-task" id="o8"><label for="o8">Bloque 6: Nombra lo que sientes. <b>"No tengo que aferrarme a lo que me gusta. Soy adulto y puedo dármelo cuando quiero. Hay abundancia".</b></label></li>
+          <li class="item"><input type="checkbox" class="task ocio-task" id="o9"><label for="o9">Bloque 7: Las tres preguntas — ¿Qué específicamente perderé? ¿Ese placer desaparece para siempre? ¿Estoy disfrutando o en piloto automático?</label></li>
+          <li class="item"><input type="checkbox" class="task ocio-task" id="o10"><label for="o10">Bloque 8: Di el mantra de cierre — "Vuelvo cuando quiero" / "Yo elijo, nadie castiga."</label></li>
+        </ul></div>
+        <div class="card"><h2>Fase 4 — Si te atascas (emergencia)</h2><ul class="checklist">
+          <li class="item"><input type="checkbox" class="task ocio-task" id="o11"><label for="o11">Bloque 9A: "Solo 5 minutos más" no es una decisión — es el sistema hablando. Di: "Ese pensamiento es el sistema de protección."</label></li>
+          <li class="item"><input type="checkbox" class="task ocio-task" id="o12"><label for="o12">Bloque 9B: No cierres la app todavía — primero párate físicamente. El movimiento interrumpe el loop. <b>"Cerrar algo que me gusta no es castigo, soy Yo eligiendo con libertad."</b></label></li>
+          <li class="item"><input type="checkbox" class="task ocio-task" id="o13"><label for="o13">Bloque 9C: Decide qué harás al cerrar — algo concreto que también te guste: algo rico, abrir Ableton, caminar 10 min.</label></li>
+          <li class="item"><input type="checkbox" class="task ocio-task" id="o14"><label for="o14">Bloque 9D: Cierra con el mantra físico — di la frase elegida mientras cierras la app o apagas la pantalla.</label></li>
+        </ul></div>
+        <div class="card"><h2>Fase 5 — Después del cierre</h2><ul class="checklist">
+          <li class="item"><input type="checkbox" class="task ocio-task" id="o15"><label for="o15">Bloque 10: Ve directo a lo elegido en el bloque 9C. La transición debe durar menos de 30 segundos.</label></li>
+          <li class="item"><input type="checkbox" class="task ocio-task" id="o16"><label for="o16">Bloque 11 (opcional): Pregúntate "¿Disfruté ese bloque?" — sin juicio. Solo registrar para elegir mejor la próxima vez.</label></li>
+        </ul></div>
+        <div class="card">
+          <div class="summary-box">
+ANTES      → Elige qué + cuánto + decláralo + alarma con nombre
+DURANTE    → Disfruta sin culpa / "Yo elijo, nadie castiga"
+ALARMA     → Respira → nombra → 3 preguntas → mantra de cierre
+ATASCADO   → No negocies → párate → pon algo bueno → cierra con mantra
+DESPUÉS    → Transición activa inmediata (&lt;30 seg)</div>
+        </div>
+        <div class="card">
+          <div class="actions">
+            <button class="btn-purple" onclick="registrarDia('ocio')">✅ Hecho</button>
+            <button class="btn-clear" onclick="limpiarChecklist('ocio')">🗑️ Limpiar</button>
+          </div>
+          <div class="toast" id="ocio-toast"></div>
+        </div>
+      </div>
+
+      <!-- ─────────── TAB: MÚSICA ─────────── -->
+      <div class="tab-content" id="tab-musica">
+        <div class="orange-note"><strong>Regla de oro:</strong> copia el proyecto de Canción 1 como plantilla base para Canción 2 — borra MIDI y audio pero conserva la estructura. Te ahorra 30–45 minutos.</div>
+        <div class="card">
+          <div class="master" style="background:#fff7ed"><input type="checkbox" id="musica-all"><label for="musica-all">Marcar / desmarcar todo</label></div>
+          <div class="status-bar">
+            <span class="progress-text" id="musica-prog-text">0 / 43</span>
+            <div class="progress-bar-wrap"><div class="progress-bar-fill fill-musica" id="musica-prog-fill" style="width:0%"></div></div>
+          </div>
+        </div>
+        <div class="card"><h2>Día 1 — Canción 1</h2>
+          <h2 style="border:none;padding-bottom:0;margin-bottom:6px;font-size:.88rem;color:var(--muted)">Bloque 1 — Concepto y base rítmica (1 hora)</h2>
+          <ul class="checklist">
+            <li class="item"><input type="checkbox" class="task musica-task" id="m1"><label for="m1">Definir género, BPM y tonalidad antes de abrir Ableton.</label></li>
+            <li class="item"><input type="checkbox" class="task musica-task" id="m2"><label for="m2">Abrir Ableton en Vista Session con plantilla: grupos Drums, Bass, Synths, Vox, FX.</label></li>
+            <li class="item"><input type="checkbox" class="task musica-task" id="m3"><label for="m3">Construir drum rack: kick, snare/clap, hi-hats, percs — loop de 2 o 4 compases.</label></li>
+            <li class="item"><input type="checkbox" class="task musica-task" id="m4"><label for="m4">Agregar bassline básica (Wavetable o sample) que complemente el kick.</label></li>
+          </ul>
+          <h2 style="border:none;padding-bottom:0;margin:10px 0 6px;font-size:.88rem;color:var(--muted)">Bloque 2 — Armonía y melodía (1.5 horas)</h2>
+          <ul class="checklist">
+            <li class="item"><input type="checkbox" class="task musica-task" id="m5"><label for="m5">Definir progresión de acordes. Activar vista de escala en Ableton.</label></li>
+            <li class="item"><input type="checkbox" class="task musica-task" id="m6"><label for="m6">Crear pad o synth armónico con Wavetable/Operator: ataque lento, sustain largo.</label></li>
+            <li class="item"><input type="checkbox" class="task musica-task" id="m7"><label for="m7">Componer melodía principal: notas del acorde primero, luego notas de paso. Cuantizar al 50%.</label></li>
+            <li class="item"><input type="checkbox" class="task musica-task" id="m8"><label for="m8">Agregar arpeggio o lead secundario para dar movimiento.</label></li>
+          </ul>
+          <h2 style="border:none;padding-bottom:0;margin:10px 0 6px;font-size:.88rem;color:var(--muted)">Bloque 3 — Letra y grabación de voz (1.5 horas)</h2>
+          <ul class="checklist">
+            <li class="item"><input type="checkbox" class="task musica-task" id="m9"><label for="m9">Escribir letra: Intro → Verso 1 → Pre-coro → Coro → Verso 2 → Coro → Outro.</label></li>
+            <li class="item"><input type="checkbox" class="task musica-task" id="m10"><label for="m10">Grabar en Ableton: canal de Audio, Input Monitoring activado, varias tomas.</label></li>
+            <li class="item"><input type="checkbox" class="task musica-task" id="m11"><label for="m11">Hacer comping: seleccionar los mejores fragmentos con el modo de comping.</label></li>
+            <li class="item"><input type="checkbox" class="task musica-task" id="m12"><label for="m12">Afinar con Tuner nativo de Ableton o Antares Auto-Tune.</label></li>
+          </ul>
+          <h2 style="border:none;padding-bottom:0;margin:10px 0 6px;font-size:.88rem;color:var(--muted)">Bloque 4 — Arreglos y estructura (1 hora)</h2>
+          <ul class="checklist">
+            <li class="item"><input type="checkbox" class="task musica-task" id="m13"><label for="m13">Pasar todo a la Vista Arrangement.</label></li>
+            <li class="item"><input type="checkbox" class="task musica-task" id="m14"><label for="m14">Construir estructura: intro (8 bars), verso, pre-coro, coro con drop, puente, outro.</label></li>
+            <li class="item"><input type="checkbox" class="task musica-task" id="m15"><label for="m15">Añadir automatizaciones de filtro, reverb y volumen para tensión y release.</label></li>
+            <li class="item"><input type="checkbox" class="task musica-task" id="m16"><label for="m16">Agregar FX de transición: risers, downlifters, white noise, reverse cymbals.</label></li>
+          </ul>
+          <h2 style="border:none;padding-bottom:0;margin:10px 0 6px;font-size:.88rem;color:var(--muted)">Bloque 5 — Mezcla (2 horas)</h2>
+          <ul class="checklist">
+            <li class="item"><input type="checkbox" class="task musica-task" id="m17"><label for="m17">Gana staging: bajar todos los faders a −6 dB como punto de partida.</label></li>
+            <li class="item"><input type="checkbox" class="task musica-task" id="m18"><label for="m18">EQ en cada pista: cortar frecuencias que se pisen (kick vs. bass con sidechain).</label></li>
+            <li class="item"><input type="checkbox" class="task musica-task" id="m19"><label for="m19">Compresión: controlar dinámicas de voz y drums.</label></li>
+            <li class="item"><input type="checkbox" class="task musica-task" id="m20"><label for="m20">Sidechain del bass al kick para que respire.</label></li>
+            <li class="item"><input type="checkbox" class="task musica-task" id="m21"><label for="m21">Reverb y Delay en Return Tracks, no en insertos directos.</label></li>
+            <li class="item"><input type="checkbox" class="task musica-task" id="m22"><label for="m22">Panoramización: distribuir elementos en el estéreo.</label></li>
+            <li class="item"><input type="checkbox" class="task musica-task" id="m23"><label for="m23">Automatizaciones de mezcla para que la energía suba y baje con la estructura.</label></li>
+          </ul>
+        </div>
+        <div class="card"><h2>Día 2 — Canción 2 + Mastering</h2>
+          <h2 style="border:none;padding-bottom:0;margin-bottom:6px;font-size:.88rem;color:var(--muted)">Mañana — Canción 2 (~6–7 horas)</h2>
+          <ul class="checklist">
+            <li class="item"><input type="checkbox" class="task musica-task" id="m24"><label for="m24">Copiar proyecto de Canción 1 como plantilla: borrar MIDI y audio, conservar pistas, efectos y grupos.</label></li>
+            <li class="item"><input type="checkbox" class="task musica-task" id="m25"><label for="m25">Cambiar género o mood para que las canciones sean distintas.</label></li>
+            <li class="item"><input type="checkbox" class="task musica-task" id="m26"><label for="m26">Repetir los 5 bloques del Día 1 completos.</label></li>
+          </ul>
+          <h2 style="border:none;padding-bottom:0;margin:10px 0 6px;font-size:.88rem;color:var(--muted)">Tarde — Mastering de ambas (2–3 horas)</h2>
+          <ul class="checklist">
+            <li class="item"><input type="checkbox" class="task musica-task" id="m27"><label for="m27">Exportar stem de mezcla a 24-bit WAV.</label></li>
+            <li class="item"><input type="checkbox" class="task musica-task" id="m28"><label for="m28">Abrir proyecto nuevo y arrastrar el WAV a una pista de audio.</label></li>
+            <li class="item"><input type="checkbox" class="task musica-task" id="m29"><label for="m29">EQ: cortar por debajo de 30 Hz con high-pass.</label></li>
+            <li class="item"><input type="checkbox" class="task musica-task" id="m30"><label for="m30">Compresor multibanda o Glue Compressor: 1–2 dB de reducción máximo.</label></li>
+            <li class="item"><input type="checkbox" class="task musica-task" id="m31"><label for="m31">Saturación suave con Saturator de Ableton para añadir calor y armónicos.</label></li>
+            <li class="item"><input type="checkbox" class="task musica-task" id="m32"><label for="m32">Limitador: techo en −1 dBTP, apuntar a −14 LUFS para Spotify/Apple Music.</label></li>
+            <li class="item"><input type="checkbox" class="task musica-task" id="m33"><label for="m33">Comparar con referencia comercial del mismo género.</label></li>
+          </ul>
+        </div>
+        <div class="card"><h2>⚙️ Checklist rápido por canción</h2><ul class="checklist">
+          <li class="item"><input type="checkbox" class="task musica-task" id="m34"><label for="m34">Tempo y tonalidad definidos.</label></li>
+          <li class="item"><input type="checkbox" class="task musica-task" id="m35"><label for="m35">Drum loop sólido: kick, snare, hats.</label></li>
+          <li class="item"><input type="checkbox" class="task musica-task" id="m36"><label for="m36">Progresión de acordes 4–8 compases.</label></li>
+          <li class="item"><input type="checkbox" class="task musica-task" id="m37"><label for="m37">Melodía principal grabada en MIDI.</label></li>
+          <li class="item"><input type="checkbox" class="task musica-task" id="m38"><label for="m38">Letra escrita y voz grabada + compingada.</label></li>
+          <li class="item"><input type="checkbox" class="task musica-task" id="m39"><label for="m39">Estructura completa en Arrangement View.</label></li>
+          <li class="item"><input type="checkbox" class="task musica-task" id="m40"><label for="m40">Automatizaciones de energía y filtros.</label></li>
+          <li class="item"><input type="checkbox" class="task musica-task" id="m41"><label for="m41">Mezcla: EQ + compresión + sidechain + reverb.</label></li>
+          <li class="item"><input type="checkbox" class="task musica-task" id="m42"><label for="m42">Export WAV 24-bit.</label></li>
+          <li class="item"><input type="checkbox" class="task musica-task" id="m43"><label for="m43">Mastering: EQ → Compresor → Limiter → −14 LUFS.</label></li>
+        </ul></div>
+        <div class="card">
+          <div class="actions">
+            <button class="btn-orange" onclick="registrarDia('musica')">✅ Hecho</button>
+            <button class="btn-clear" onclick="limpiarChecklist('musica')">🗑️ Limpiar</button>
+          </div>
+          <div class="toast" id="musica-toast"></div>
+        </div>
+      </div>
+
+      <!-- ─────────── TAB: NOTAS ─────────── -->
+      <div class="tab-content" id="tab-notas">
+        <div class="notas-hint">
+          <div>
+            <strong>Cómo usar:</strong> escribe una tarea y presiona <kbd>Enter</kbd> para agregar otra línea con su casilla.
+            Usa <kbd>Shift</kbd>+<kbd>Enter</kbd> para bajar de renglón dentro de la misma tarea.
+            Marca la casilla cuando la completes — se registrará un punto amarillo en el calendario.
+          </div>
+        </div>
+
+        <div class="notas-card">
+          <div class="notas-header">
+            <span>📝 Tareas adicionales</span>
+            <span class="notas-counter" id="notas-counter">0 / 0</span>
+          </div>
+          <div class="notas-lines" id="notas-lines"></div>
+          <div class="notas-actions">
+            <button class="btn-yellow" onclick="agregarNota()">+ Nueva tarea</button>
+            <button class="btn-clear" onclick="limpiarNotasCompletadas()">🗑️ Borrar completadas</button>
+            <span class="notas-done-count" id="notas-done-label"></span>
+          </div>
+        </div>
+
+        <div class="toast" id="notas-toast" style="margin-top:12px"></div>
+      </div>
+
+    </div><!-- /list-body -->
+  </div><!-- /list-panel -->
+</div><!-- /layout -->
+
+<script>
+  /* ══════════════ KEYS & CONFIG ══════════════ */
+  const KEYS = {
+    aseo:   { check: "check-aseo-v4",   cal: "cal-aseo-v4",   label: "Aseo profundo",     dotClass: "dot-aseo",   logClass: "log-aseo"   },
+    ocio:   { check: "check-ocio-v4",   cal: "cal-ocio-v4",   label: "Protocolo de ocio", dotClass: "dot-ocio",   logClass: "log-ocio"   },
+    musica: { check: "check-musica-v4", cal: "cal-musica-v4", label: "Producción musical", dotClass: "dot-musica", logClass: "log-musica" },
+    notas:  {                           cal: "cal-notas-v4",  label: "Tarea completada",   dotClass: "dot-notas",  logClass: "log-notas"  }
+  };
+
+  const NOTAS_KEY = "notas-data-v4";
+  const TITLES = { aseo: "🧹 Aseo Profundo", ocio: "🎮 Protocolo de Ocio", musica: "🎵 Producción Musical", notas: "📝 Notas" };
+  const MONTHS = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+
+  /* ══════════════ STORAGE ══════════════ */
+  function getCheck(tipo)     { return JSON.parse(localStorage.getItem(KEYS[tipo].check) || "{}"); }
+  function saveCheck(tipo, s) { localStorage.setItem(KEYS[tipo].check, JSON.stringify(s)); }
+  function getCal(tipo)       { return JSON.parse(localStorage.getItem(KEYS[tipo].cal)   || "{}"); }
+  function saveCal(tipo, c)   { localStorage.setItem(KEYS[tipo].cal, JSON.stringify(c)); }
+  function getNotas()         { return JSON.parse(localStorage.getItem(NOTAS_KEY) || "[]"); }
+  function saveNotas(arr)     { localStorage.setItem(NOTAS_KEY, JSON.stringify(arr)); }
+
+  /* ══════════════ TABS ══════════════ */
+  let activeTab = "aseo";
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
+      btn.classList.add("active");
+      activeTab = btn.dataset.tab;
+      document.getElementById("tab-" + activeTab).classList.add("active");
+      document.getElementById("panelTitle").textContent = TITLES[activeTab];
+      if (activeTab === "notas") renderNotas();
+    });
+  });
+
+  /* ══════════════ CHECKLISTS (aseo / ocio / musica) ══════════════ */
+  function getTasksOf(tipo) { return [...document.querySelectorAll(`.${tipo}-task`)]; }
+
+  function updateProgress(tipo) {
+    const tasks = getTasksOf(tipo);
+    const state = getCheck(tipo);
+    let done = 0;
+    tasks.forEach(t => {
+      t.checked = !!state[t.id];
+      const li = t.closest(".item");
+      t.checked ? (li.classList.add("done"), done++) : li.classList.remove("done");
+    });
+    const pct = tasks.length ? Math.round((done / tasks.length) * 100) : 0;
+    document.getElementById(tipo + "-prog-text").textContent = `${done} / ${tasks.length}`;
+    document.getElementById(tipo + "-prog-fill").style.width = pct + "%";
+    const master = document.getElementById(tipo + "-all");
+    if (master) master.checked = done === tasks.length && tasks.length > 0;
+  }
+
+  ["aseo","ocio","musica"].forEach(tipo => {
+    getTasksOf(tipo).forEach(t => {
+      t.addEventListener("change", () => {
+        const s = getCheck(tipo); s[t.id] = t.checked; saveCheck(tipo, s); updateProgress(tipo);
+      });
+    });
+    const master = document.getElementById(tipo + "-all");
+    if (master) {
+      master.addEventListener("change", () => {
+        const s = {};
+        getTasksOf(tipo).forEach(t => { t.checked = master.checked; s[t.id] = master.checked; });
+        saveCheck(tipo, s); updateProgress(tipo);
+      });
+    }
+    updateProgress(tipo);
+  });
+
+  function registrarDia(tipo) {
+    const today = new Date().toISOString().slice(0, 10);
+    const cal = getCal(tipo);
+    const isNew = !cal[today];
+    cal[today] = { ts: new Date().toISOString() };
+    saveCal(tipo, cal);
+    renderCalendar(); renderLog();
+    showToast(tipo, isNew
+      ? `¡Registrado! ${KEYS[tipo].label} marcado el ${today}.`
+      : `Ya había un registro para hoy (${today}).`,
+      isNew ? tipo : "info"
+    );
+  }
+
+  function limpiarChecklist(tipo) {
+    localStorage.removeItem(KEYS[tipo].check);
+    updateProgress(tipo);
+    showToast(tipo, "Checklist limpiada. El calendario se mantiene.", "info");
+  }
+
+  /* ══════════════ NOTAS ══════════════ */
+  function renderNotas() {
+    const arr = getNotas();
+    const container = document.getElementById("notas-lines");
+    container.innerHTML = "";
+
+    if (!arr.length) {
+      agregarNota(); return;
+    }
+
+    arr.forEach((nota, idx) => buildNotaRow(container, nota, idx));
+    updateNotasCounter();
+  }
+
+  function buildNotaRow(container, nota, idx) {
+    const row = document.createElement("div");
+    row.className = "nota-row" + (nota.done ? " done-row" : "");
+    row.dataset.idx = idx;
+
+    const num = document.createElement("div");
+    num.className = "nota-num";
+    num.textContent = idx + 1;
+
+    const ta = document.createElement("textarea");
+    ta.className = "nota-text";
+    ta.rows = 1;
+    ta.placeholder = idx === 0 ? "Escribe una tarea..." : "";
+    ta.value = nota.text || "";
+    if (nota.done) ta.style.textDecoration = "line-through";
+    if (nota.done) ta.style.color = "#9ca3af";
+
+    // Auto-resize
+    ta.addEventListener("input", () => {
+      ta.style.height = "auto";
+      ta.style.height = ta.scrollHeight + "px";
+      const arr2 = getNotas();
+      arr2[idx].text = ta.value;
+      saveNotas(arr2);
+    });
+
+    // Enter = nueva fila, Shift+Enter = salto de línea normal
+    ta.addEventListener("keydown", e => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        const arr2 = getNotas();
+        arr2.splice(idx + 1, 0, { text: "", done: false });
+        saveNotas(arr2);
+        renderNotas();
+        // Focus en la nueva fila
+        setTimeout(() => {
+          const rows = document.querySelectorAll(".nota-text");
+          if (rows[idx + 1]) rows[idx + 1].focus();
+        }, 30);
+      }
+      // Backspace en fila vacía = eliminar fila
+      if (e.key === "Backspace" && ta.value === "") {
+        e.preventDefault();
+        const arr2 = getNotas();
+        if (arr2.length > 1) {
+          arr2.splice(idx, 1);
+          saveNotas(arr2);
+          renderNotas();
+          setTimeout(() => {
+            const rows = document.querySelectorAll(".nota-text");
+            const target = rows[Math.max(0, idx - 1)];
+            if (target) { target.focus(); target.selectionStart = target.selectionEnd = target.value.length; }
+          }, 30);
+        }
+      }
+    });
+
+    const checkWrap = document.createElement("div");
+    checkWrap.className = "nota-check-wrap";
+
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.className = "nota-check";
+    cb.checked = nota.done || false;
+
+    cb.addEventListener("change", () => {
+      const arr2 = getNotas();
+      arr2[idx].done = cb.checked;
+      saveNotas(arr2);
+
+      row.classList.toggle("done-row", cb.checked);
+      ta.style.textDecoration = cb.checked ? "line-through" : "";
+      ta.style.color = cb.checked ? "#9ca3af" : "";
+
+      updateNotasCounter();
+
+      // Registrar punto amarillo si se marcó como hecho
+      if (cb.checked) {
+        const today = new Date().toISOString().slice(0, 10);
+        const cal = getCal("notas");
+        const isNew = !cal[today];
+        cal[today] = { ts: new Date().toISOString(), count: (cal[today]?.count || 0) + 1 };
+        saveCal("notas", cal);
+        renderCalendar(); renderLog();
+        if (isNew) showToast("notas", "¡Tarea completada! Punto amarillo registrado hoy.", "yellow");
+      }
+    });
+
+    checkWrap.appendChild(cb);
+    row.appendChild(num);
+    row.appendChild(ta);
+    row.appendChild(checkWrap);
+    container.appendChild(row);
+
+    // Adjust height after render
+    setTimeout(() => { ta.style.height = "auto"; ta.style.height = ta.scrollHeight + "px"; }, 0);
+  }
+
+  function agregarNota() {
+    const arr = getNotas();
+    arr.push({ text: "", done: false });
+    saveNotas(arr);
+    renderNotas();
+    setTimeout(() => {
+      const rows = document.querySelectorAll(".nota-text");
+      if (rows.length) rows[rows.length - 1].focus();
+    }, 30);
+  }
+
+  function updateNotasCounter() {
+    const arr = getNotas();
+    const done = arr.filter(n => n.done).length;
+    const total = arr.length;
+    document.getElementById("notas-counter").textContent = `${done} / ${total}`;
+    document.getElementById("notas-done-label").textContent = done > 0 ? `${done} completada${done > 1 ? "s" : ""}` : "";
+  }
+
+  function limpiarNotasCompletadas() {
+    const arr = getNotas().filter(n => !n.done);
+    saveNotas(arr.length ? arr : [{ text: "", done: false }]);
+    renderNotas();
+    showToast("notas", "Tareas completadas eliminadas.", "info");
+  }
+
+  /* ══════════════ TOAST ══════════════ */
+  function showToast(tipo, msg, style) {
+    const el = document.getElementById(tipo + "-toast");
+    if (!el) return;
+    el.textContent = msg;
+    el.className = "toast " + style;
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { el.className = "toast"; }, 4000);
+  }
+
+  /* ══════════════ CALENDAR ══════════════ */
+  let viewYear, viewMonth;
+  (function() { const n = new Date(); viewYear = n.getFullYear(); viewMonth = n.getMonth(); })();
+
+  function renderCalendar() {
+    const grid = document.getElementById("calGrid");
+    document.getElementById("calTitle").textContent = `${MONTHS[viewMonth]} ${viewYear}`;
+    grid.innerHTML = "";
+
+    ["Lu","Ma","Mi","Ju","Vi","Sá","Do"].forEach(d => {
+      const el = document.createElement("div");
+      el.className = "cal-day-name"; el.textContent = d; grid.appendChild(el);
+    });
+
+    const firstDay = new Date(viewYear, viewMonth, 1);
+    let offset = firstDay.getDay() - 1;
+    if (offset < 0) offset = 6;
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    const today = new Date().toISOString().slice(0, 10);
+
+    const cals = {
+      aseo:   getCal("aseo"),
+      ocio:   getCal("ocio"),
+      musica: getCal("musica"),
+      notas:  getCal("notas")
+    };
+
+    for (let i = 0; i < offset; i++) {
+      const el = document.createElement("div"); el.className = "cal-day empty"; grid.appendChild(el);
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${viewYear}-${String(viewMonth+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+      const el = document.createElement("div");
+      let cls = "cal-day";
+      if (dateStr === today) cls += " today";
+
+      const dots = [];
+      if (cals.aseo[dateStr])   dots.push("dot-aseo");
+      if (cals.ocio[dateStr])   dots.push("dot-ocio");
+      if (cals.musica[dateStr]) dots.push("dot-musica");
+      if (cals.notas[dateStr])  dots.push("dot-notas");
+
+      if (dots.length) cls += " has-marks";
+      el.className = cls;
+      el.textContent = d;
+
+      if (dots.length) {
+        const row = document.createElement("div");
+        row.className = "cal-dot-row";
+        dots.forEach(dc => {
+          const dot = document.createElement("div");
+          dot.className = "cal-dot " + dc;
+          row.appendChild(dot);
+        });
+        el.appendChild(row);
+      }
+
+      grid.appendChild(el);
+    }
+  }
+
+  function renderLog() {
+    const list = document.getElementById("logList");
+    const entries = [];
+    ["aseo","ocio","musica","notas"].forEach(tipo => {
+      Object.entries(getCal(tipo)).forEach(([date, val]) => {
+        entries.push({ date, tipo, ts: val.ts });
+      });
+    });
+    entries.sort((a,b) => b.ts.localeCompare(a.ts));
+    const recent = entries.slice(0, 8);
+    if (!recent.length) {
+      list.innerHTML = '<li style="color:#9ca3af;font-size:.78rem">Sin registros aún.</li>'; return;
+    }
+    list.innerHTML = recent.map(e => {
+      const [y,m,d] = e.date.split("-");
+      return `<li class="${KEYS[e.tipo].logClass}">${d} ${MONTHS[parseInt(m)-1].slice(0,3)} ${y} — ${KEYS[e.tipo].label}</li>`;
+    }).join("");
+  }
+
+  document.getElementById("prevMonth").addEventListener("click", () => {
+    viewMonth--; if (viewMonth < 0) { viewMonth = 11; viewYear--; } renderCalendar();
+  });
+  document.getElementById("nextMonth").addEventListener("click", () => {
+    viewMonth++; if (viewMonth > 11) { viewMonth = 0; viewYear++; } renderCalendar();
+  });
+
+  /* ══════════════ INIT ══════════════ */
+  renderCalendar();
+  renderLog();
+</script>
+</body>
+</html>
